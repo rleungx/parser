@@ -78,6 +78,7 @@ import (
 	and               "AND"
 	as                "AS"
 	asc               "ASC"
+	attributes        "ATTRIBUTES"
 	between           "BETWEEN"
 	bigIntType        "BIGINT"
 	binaryType        "BINARY"
@@ -1283,6 +1284,7 @@ import (
 	PlacementOptions                       "Placement rules options"
 	PlacementSpec                          "Placement rules specification"
 	PlacementSpecList                      "Placement rules specifications"
+	Attributes                             "Region label attributes option"
 
 %type	<ident>
 	AsOpt             "AS or EmptyString"
@@ -1496,6 +1498,12 @@ PlacementCount:
 
 PlacementLabelConstraints:
 	"CONSTRAINTS" "=" stringLit
+	{
+		$$ = $3
+	}
+
+Attributes:
+	"ATTRIBUTES" "=" stringLit
 	{
 		$$ = $3
 	}
@@ -1739,6 +1747,17 @@ AlterTableSpec:
 			Statistics:  statsSpec,
 		}
 	}
+|	"ADD" Attributes
+	{
+		attributesSpec := &ast.AttributesSpec{
+			Tp:         ast.AttributesAdd,
+			Attributes: $2.(string),
+		}
+		$$ = &ast.AlterTableSpec{
+			Tp:             ast.AlterTableAttributes,
+			AttributesSpec: attributesSpec,
+		}
+	}
 |	"ALTER" "PARTITION" Identifier PlacementSpecList %prec lowerThanComma
 	{
 		$$ = &ast.AlterTableSpec{
@@ -1803,6 +1822,17 @@ AlterTableSpec:
 			Tp:         ast.AlterTableDropStatistics,
 			IfExists:   $3.(bool),
 			Statistics: statsSpec,
+		}
+	}
+|	"DROP" Attributes
+	{
+		attributesSpec := &ast.AttributesSpec{
+			Tp:         ast.AttributesDrop,
+			Attributes: $2.(string),
+		}
+		$$ = &ast.AlterTableSpec{
+			Tp:             ast.AlterTableAttributes,
+			AttributesSpec: attributesSpec,
 		}
 	}
 |	"EXCHANGE" "PARTITION" Identifier "WITH" "TABLE" TableName WithValidationOpt
